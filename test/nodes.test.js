@@ -146,16 +146,25 @@ test('Trigger checkExists keeps a matching subscription and treats 404 as gone',
 	const trigger = new MailflossTrigger();
 	const live = context({
 		params: { events: ['status-risky', 'job-finished'] },
-		staticData: { webhookId: 'wh_1' },
+		staticData: { webhookId: 'wh_1', secret: 's' },
 		responses: [{ url: 'https://n8n.example.com/webhook/abc', events: ['job-finished', 'status-risky'], active: true }],
 	});
 	assert.equal(await trigger.webhookMethods.default.checkExists.call(live), true);
+
+	// Same subscription, but the signing secret is gone: replace it rather than accept unsigned deliveries.
+	const noSecret = context({
+		params: { events: ['job-finished'] },
+		staticData: { webhookId: 'wh_1' },
+		responses: [{ url: 'https://n8n.example.com/webhook/abc', events: ['job-finished'], active: true }, {}],
+	});
+	assert.equal(await trigger.webhookMethods.default.checkExists.call(noSecret), false);
+	assert.deepEqual(noSecret.requests.map((r) => r.method), ['GET', 'DELETE']);
 
 	const gone = context({ params: { events: ['job-finished'] }, staticData: { webhookId: 'wh_1' }, responses: [apiError(404, 'not_found')] });
 	assert.equal(await trigger.webhookMethods.default.checkExists.call(gone), false);
 });
 
-test('Trigger webhook accepts a signed delivery and rejects a forged one', async () => {
+test('Trigger webhook accepts a signed delivery and rejects forged, unsigned or secretless ones', async () => {
 	const data = { event: 'job.finished', id: 'job_1', numPassed: 3 };
 	const secret = 'a'.repeat(64);
 	const signature = createHmac('sha1', secret).update(JSON.stringify(data)).digest('hex');
@@ -164,7 +173,14 @@ test('Trigger webhook accepts a signed delivery and rejects a forged one', async
 	const signed = context({ staticData: { secret }, headers: { 'x-request-signature': signature }, body: { data } });
 	assert.deepEqual(await trigger.webhook.call(signed), { workflowData: [[{ json: data }]] });
 
-	const forged = context({ staticData: { secret }, headers: { 'x-request-signature': '0'.repeat(40) }, body: { data } });
-	assert.deepEqual(await trigger.webhook.call(forged), { noWebhookResponse: true });
-	assert.equal(forged.response.status, 401);
+	const rejected = [
+		context({ staticData: { secret }, headers: { 'x-request-signature': '0'.repeat(40) }, body: { data } }),
+		context({ staticData: { secret }, body: { data } }),
+		context({ staticData: {}, headers: { 'x-request-signature': signature }, body: { data } }),
+		context({ staticData: { secret: '' }, headers: { 'x-request-signature': signature }, body: { data } }),
+	];
+	for (const ctx of rejected) {
+		assert.deepEqual(await trigger.webhook.call(ctx), { noWebhookResponse: true });
+		assert.equal(ctx.response.status, 401);
+	}
 });

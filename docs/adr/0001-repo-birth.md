@@ -9,9 +9,11 @@ Status: accepted, 2026-10-21 (MAI-2927)
   `eslint-disable` comments, so neither do we.
 - `npm test` builds with `tsc` (via `n8n-node build`, which is also the typecheck) and runs
   `node --test` on `test/*.test.js`.
-- `.githooks/pre-commit` runs lint, then tests, then the machine-wide gitleaks scan. Wire it
-  with `npm run hooks`. We can't use a `prepare` script: n8n's lint bans lifecycle scripts.
-- CI (`.github/workflows/ci.yml`) runs lint and `npm test` on every PR and push to `main`.
+- `.githooks/pre-commit` runs lint, then tests, then gitleaks on the staged diff, and refuses
+  the commit if gitleaks isn't installed. Wire it with `npm run hooks`. We can't use a `prepare`
+  script: n8n's lint bans lifecycle scripts.
+- CI (`.github/workflows/ci.yml`) runs gitleaks over the git history, lint and `npm test` on
+  every PR and push to `main`.
 
 ## 2. Technology
 

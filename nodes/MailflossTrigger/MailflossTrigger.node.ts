@@ -48,6 +48,10 @@ function isNotFound(error: unknown): boolean {
 	return error.httpCode === '404' || data?.error?.code === 'not_found';
 }
 
+function hasSecret(secret: unknown): secret is string {
+	return typeof secret === 'string' && secret !== '';
+}
+
 function sameEvents(a: unknown, b: string[]): boolean {
 	return Array.isArray(a) && [...a].sort().join() === [...b].sort().join();
 }
@@ -107,13 +111,15 @@ export class MailflossTrigger implements INodeType {
 				try {
 					const subscription = await mailflossApiRequest.call(this, 'GET', path);
 					if (
+						hasSecret(staticData.secret) &&
 						subscription.url === this.getNodeWebhookUrl('default') &&
 						subscription.active !== false &&
 						sameEvents(subscription.events, this.getNodeParameter('events') as string[])
 					) {
 						return true;
 					}
-					// Stale: wrong URL or events, or mailfloss deactivated it after failed deliveries.
+					// Stale: wrong URL or events, a lost signing secret, or mailfloss deactivated it
+					// after failed deliveries.
 					await mailflossApiRequest.call(this, 'DELETE', path);
 				} catch (error) {
 					if (!isNotFound(error)) throw new NodeApiError(this.getNode(), error as JsonObject);
@@ -166,16 +172,14 @@ export class MailflossTrigger implements INodeType {
 		const payload = (body.data ?? {}) as IDataObject;
 
 		// mailfloss signs each delivery: hex HMAC-SHA1 of JSON.stringify(data), keyed with
-		// the secret this node set when it created the subscription.
-		if (typeof secret === 'string') {
-			const received = Buffer.from(String(this.getHeaderData()['x-request-signature'] ?? ''));
-			const expected = Buffer.from(
-				createHmac('sha1', secret).update(JSON.stringify(payload)).digest('hex'),
-			);
-			if (received.length !== expected.length || !timingSafeEqual(received, expected)) {
-				this.getResponseObject().status(401).send('Signature mismatch');
-				return { noWebhookResponse: true };
-			}
+		// the secret this node set when it created the subscription. No secret, no delivery.
+		const received = Buffer.from(String(this.getHeaderData()['x-request-signature'] ?? ''));
+		const expected = hasSecret(secret)
+			? Buffer.from(createHmac('sha1', secret).update(JSON.stringify(payload)).digest('hex'))
+			: undefined;
+		if (!expected || received.length !== expected.length || !timingSafeEqual(received, expected)) {
+			this.getResponseObject().status(401).send('Signature mismatch');
+			return { noWebhookResponse: true };
 		}
 
 		return { workflowData: [this.helpers.returnJsonArray(payload)] };
