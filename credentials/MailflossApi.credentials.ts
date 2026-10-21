@@ -1,5 +1,6 @@
 import type {
 	IAuthenticateGeneric,
+	Icon,
 	ICredentialTestRequest,
 	ICredentialType,
 	INodeProperties,
@@ -8,19 +9,26 @@ import type {
 export class MailflossApi implements ICredentialType {
 	name = 'mailflossApi';
 
-	displayName = 'Mailfloss API';
+	// n8n's scanner requires a Title Case credential name, and 'mailfloss.com' is
+	// the one lowercase form of the brand it accepts.
+	displayName = 'mailfloss.com API';
 
-	// Link to your community node's README
-	documentationUrl = 'https://github.com/org/-mailfloss?tab=readme-ov-file#credentials';
+	icon: Icon = {
+		light: 'file:../nodes/Mailfloss/mailfloss.svg',
+		dark: 'file:../nodes/Mailfloss/mailfloss.dark.svg',
+	};
+
+	documentationUrl = 'https://github.com/mailfloss/n8n-nodes-mailfloss#credentials';
 
 	properties: INodeProperties[] = [
 		{
-			displayName: 'Access Token',
-			name: 'accessToken',
+			displayName: 'API Key',
+			name: 'apiKey',
 			type: 'string',
 			typeOptions: { password: true },
 			required: true,
 			default: '',
+			description: 'Find your API key in the mailfloss dashboard under Settings → API',
 		},
 	];
 
@@ -28,7 +36,7 @@ export class MailflossApi implements ICredentialType {
 		type: 'generic',
 		properties: {
 			headers: {
-				Authorization: '=Bearer {{$credentials.accessToken}}',
+				Authorization: '=Bearer {{$credentials.apiKey}}',
 			},
 		},
 	};
@@ -36,7 +44,7 @@ export class MailflossApi implements ICredentialType {
 	test: ICredentialTestRequest = {
 		request: {
 			baseURL: 'https://api.mailfloss.com',
-			url: '/v1/user',
+			url: '/v1/check-key',
 		},
 	};
 }

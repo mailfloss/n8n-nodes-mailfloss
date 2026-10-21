@@ -1,3 +1,19 @@
+# mailfloss n8n community node
+
+`@mailfloss/n8n-nodes-mailfloss`: n8n nodes for the mailfloss email verification API
+(https://api.mailfloss.com, spec at /v1/openapi.json). Decisions: `docs/adr/0001-repo-birth.md`.
+
+- Write "mailfloss" in lowercase everywhere. The one exception is the credential display
+  name, `mailfloss.com API`, because n8n's scanner requires Title Case there.
+- Say "email verification", never "validation". Only state facts that mailfloss.com or the
+  API spec already state.
+- Keep runtime dependencies at zero and keep `npm run lint` clean without `eslint-disable`
+  comments: n8n's verification scanner ignores them.
+- Run `npm run hooks` once per clone; the pre-commit hook runs lint, tests and gitleaks.
+- Release: bump `version` and `CHANGELOG.md` in a PR, merge, then push the matching tag
+  (for example `0.1.1`). `.github/workflows/publish.yml` publishes with npm provenance.
+  Never publish from a laptop: n8n rejects verified nodes without provenance.
+
 # n8n community node
 
 ## Overview
