@@ -1,0 +1,12 @@
+#!/bin/sh
+# Wired by `npm run hooks` (sets core.hooksPath=.githooks for this clone and its worktrees).
+# Refuses a commit that fails lint (n8n's scanner rules), typecheck/build or tests,
+# then scans the staged diff for secrets with gitleaks.
+set -e
+npm run --silent lint
+npm test --silent
+if ! command -v gitleaks >/dev/null 2>&1; then
+	echo "pre-commit: gitleaks is required for the secret scan (brew install gitleaks)" >&2
+	exit 1
+fi
+gitleaks protect --staged --redact --no-banner

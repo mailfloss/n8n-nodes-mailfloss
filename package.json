@@ -1,14 +1,25 @@
 {
-  "name": "n8n-nodes-mailfloss",
+  "name": "@mailfloss/n8n-nodes-mailfloss",
   "version": "0.1.0",
-  "description": "",
+  "description": "n8n community node for mailfloss email verification: verify emails in real time, run batch jobs, and trigger workflows from mailfloss webhooks",
   "license": "MIT",
-  "homepage": "",
-  "keywords": ["n8n-community-node-package"],
-  "author": { "name": "mailfloss", "email": "hello@mailfloss.com" },
+  "homepage": "https://github.com/mailfloss/n8n-nodes-mailfloss#readme",
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "mailfloss",
+    "email verification"
+  ],
+  "author": {
+    "name": "mailfloss",
+    "email": "hello@mailfloss.com"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/<...>/n8n-nodes-<...>.git"
+    "url": "git+https://github.com/mailfloss/n8n-nodes-mailfloss.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mailfloss/n8n-nodes-mailfloss/issues"
   },
   "scripts": {
     "build": "n8n-node build",
@@ -17,21 +28,35 @@
     "lint": "n8n-node lint",
     "lint:fix": "n8n-node lint --fix",
     "release": "n8n-node release",
-    "prepublishOnly": "n8n-node prerelease"
+    "prepublishOnly": "n8n-node prerelease",
+    "test": "n8n-node build && node --test test/*.test.js",
+    "hooks": "git config core.hooksPath .githooks"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "n8n": {
     "n8nNodesApiVersion": 1,
     "strict": true,
-    "credentials": ["dist/credentials/MailflossApi.credentials.js"],
-    "nodes": ["dist/nodes/Mailfloss/Mailfloss.node.js"]
+    "credentials": [
+      "dist/credentials/MailflossApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Mailfloss/Mailfloss.node.js",
+      "dist/nodes/MailflossTrigger/MailflossTrigger.node.js"
+    ]
   },
   "devDependencies": {
-    "@n8n/node-cli": "*",
+    "@n8n/node-cli": "^0.53.2",
     "eslint": "9.32.0",
     "prettier": "3.6.2",
     "release-it": "^21.1.0",
     "typescript": "5.9.2"
   },
-  "peerDependencies": { "n8n-workflow": "*" }
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
 }
