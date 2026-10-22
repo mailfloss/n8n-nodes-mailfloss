@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- First release published through npm trusted publishing (no npm token). No code changes.
+
 ## 0.1.0
 
 - mailfloss node: Verify email; Start batch, Get batch status and Get batch results.
