@@ -1,6 +1,6 @@
 {
   "name": "@mailfloss/n8n-nodes-mailfloss",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "n8n community node for mailfloss email verification: verify emails in real time, run batch jobs, and trigger workflows from mailfloss webhooks",
   "license": "MIT",
   "homepage": "https://github.com/mailfloss/n8n-nodes-mailfloss#readme",
